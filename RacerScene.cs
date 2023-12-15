@@ -2,10 +2,12 @@
 // RacerScene
 //============================================================================
 using Godot;
+using Godot.NativeInterop;
 using System;
+using System.Drawing;
 using System.Linq.Expressions;
 
-public partial class RacerScene : Node3D
+public partial class RacerScene : Node3D//Simulator
 {
 	private CamRig cam;
 	float longitudeDeg;
@@ -38,10 +40,17 @@ public partial class RacerScene : Node3D
 
 	UIPanelDisplay dataDisplay;
 
-	//------------------------------------------------------------------------
-	// _Ready: Called when the node enters the scene tree for the first time.
-	//------------------------------------------------------------------------
-	public override void _Ready()
+    /*public Vector4[] getVA(float time, Vector4[] state)  //pass statePV
+	{
+		//linalgbullshit
+		//return stateVA
+	}
+	*/
+
+    //------------------------------------------------------------------------
+    // _Ready: Called when the node enters the scene tree for the first time.
+    //------------------------------------------------------------------------
+    public override void _Ready()
 	{
 		// Set up the camera rig
 		longitudeDeg = 30.0f;
@@ -65,7 +74,7 @@ public partial class RacerScene : Node3D
 		dataDisplay.SetLabel(0,"Roller Racer");
 		dataDisplay.SetValue(0,"");
 		dataDisplay.SetLabel(1,"Speed");
-		dataDisplay.SetValue(1,"---");
+		dataDisplay.SetValue(1,"");
 		dataDisplay.SetLabel(2,"Kin. Energy");
 		dataDisplay.SetValue(2,"---");
 		dataDisplay.SetLabel(3,"Slip Rate F");
@@ -102,10 +111,23 @@ public partial class RacerScene : Node3D
 	public override void _Process(double delta)
 	{
 		
-		cart.SetLoc(0.0f, 0.0f, 0.0f, // need to update this with other states
-			0.0f, 0.0f, 0.0f, 
+		cart.SetLoc((float)racer.xG, (float)racer.zG, (float)racer.Heading, // need to update this with other states
+			(float)racer.WheelAngleL, (float)racer.WheelAngleR, (float)racer.WheelAngleF, 
 			(float)racer.SteerAngle);
-	}
+        dataDisplay.SetValue(1, racer.Speed.ToString());	//speed label
+        dataDisplay.SetValue(2, racer.KineticEnergy.ToString());  //ke labal
+
+
+
+
+        // cgLoc.X = xG;
+        //cgLoc.Z = zG;
+        //rotVec.Y = hdg;
+        //rotWhL.Z = thL;
+        //rotWhR.Z = thR;
+        //rotWhF.Z = thF;
+        //rotSteer.Y = stAngle;
+    }
 
     //------------------------------------------------------------------------
     // _PhysicsProcess
@@ -117,7 +139,7 @@ public partial class RacerScene : Node3D
 		ProcessPilotInput();
 		racer.SteerAngleSignal = (-50.0 * steerSig)*Math.PI/180.0;
 
-		racer.StepRK2(time,delta);  // You are going to use the RK4 integrator
+		racer.Step(time,delta);  // You are going to use the RK4 integrator
 		time += delta;
 
 		camSubject.X = (float)racer.xG;
